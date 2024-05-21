@@ -24,5 +24,7 @@ public class OperationModel {
     private Boolean ocupado;
 
     private Boolean pausa;
+
+    private Boolean analise;
 }
 

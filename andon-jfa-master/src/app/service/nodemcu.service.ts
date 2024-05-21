@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Nodemcu } from '../module/nodemcu';
 import { Observable } from 'rxjs';
 import { Realizado } from '../module/realizado';
+import { environment } from 'src/environments/environment.development';
 
 @Injectable({
   providedIn: 'root',
@@ -13,15 +14,15 @@ export class NodemcuService {
   getAll(): Observable<any> {
 
     return this.http.get<Nodemcu>(
-      'http://172.16.34.147:9000/api/v1/nodemcu',
+      environment.url + 'nodemcu',
     );
   }
 
   getAllRealizado(): Observable<Realizado[]>{
-    return this.http.get<Realizado[]>("http://172.16.34.147:9000/api/v1/realizadoHoraria")
+    return this.http.get<Realizado[]>(environment.url + "realizadoHoraria")
   }
 
   pausa(pausa: boolean){
-    return this.http.get("http://172.16.34.147:9000/api/v1/operation/pausa/" + pausa)
+    return this.http.get(environment.url + "operation/pausa/" + pausa)
   }
 }

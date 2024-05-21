@@ -20,7 +20,7 @@ export class HomeComponent  implements OnInit {
     private mainService: MainService
   ) {}
 
-
+  dataAtual = new Date()
   diaDaSemanda: Date = new Date();
   dataGraph: any[] = [];
   countGraph: number[] = [];
@@ -191,6 +191,7 @@ export class HomeComponent  implements OnInit {
         this.TCmedioRealizado = 0;
         this.getRealizado();
       });
+      this.dataAtual = new Date();
     }, 1000);
     setInterval(() => {
       this.nodemcuService.getAllRealizado().subscribe((res) => {

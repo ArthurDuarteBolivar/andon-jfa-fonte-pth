@@ -1,13 +1,11 @@
 package com.api.nodemcu.controllers;
 
-import com.api.nodemcu.Services.TimerService;
-import com.api.nodemcu.model.ControleGeralModel;
+
 import com.api.nodemcu.model.MainModel;
 import com.api.nodemcu.model.NodemcuModel;
 import com.api.nodemcu.model.OperationModel;
 import com.api.nodemcu.model.RealizadoHorariaModel;
 import com.api.nodemcu.model.RealizadoHorariaTabletModel;
-import com.api.nodemcu.repository.ControleGeralRepository;
 import com.api.nodemcu.repository.MainRepostory;
 import com.api.nodemcu.repository.NodemcuRepository;
 import com.api.nodemcu.repository.OperationRepository;
@@ -41,9 +39,6 @@ public class NodemcuController {
 
     @Autowired
     private MainRepostory mainRepostory;
-
-    @Autowired
-    ControleGeralRepository controleGeralRepository;
 
     @Autowired
     private RealizadoHorariaRepository realizadoHorariaRepository;
@@ -158,6 +153,9 @@ public class NodemcuController {
     @GetMapping("/atualizarState/{name}/{state}")
     public void atualizarCor(@PathVariable("name") String name, @PathVariable("state") String state) {
         OperationModel operation = operationRepository.findByName(name);
+        if(state.equals("azul")){
+            state = "verde";
+        }
         repository.updateStateByNameId(state, operation.getId());
     }
 

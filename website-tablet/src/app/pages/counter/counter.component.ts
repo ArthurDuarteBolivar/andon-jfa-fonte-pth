@@ -28,7 +28,11 @@ export class CounterComponent implements OnInit, OnDestroy {
     public dialog: MatDialog,
     private sheetsService: SheetsService,
     private router: Router
-  ) {}
+  ) { }
+
+
+  analiseButton: boolean = false;
+  onAnalise: boolean = false;
 
   loadingButton: boolean = false;
   imposto: number = 0;
@@ -64,11 +68,13 @@ export class CounterComponent implements OnInit, OnDestroy {
   labelPosition: string = '';
   newConter: number = 0;
   newMaintenance: number = 0;
+  onPausa: boolean = false;
   operation: Operation = {
     id: 0,
     name: '',
     limitedTime: 0,
     ocupado: false,
+    pausa: false
   };
   storage: Storage = localStorage;
 
@@ -163,11 +169,33 @@ export class CounterComponent implements OnInit, OnDestroy {
       }
     );
     setInterval(() => {
-      console.log(this.shiftTime);
+      this.operationService.get(this.operation.name).subscribe(res => {
+        if (res.pausa == true) {
+          this.onPausa = true;
+          clearInterval(this.intervalRef);
+          clearInterval(this.intervalo);
+          this.vermelhoStateCalled = false;
+          this.tempoOcioso = 0;
+          this.stateButton = true;
+          this.contador = 0;
+          this.tempoOcioso = 0;
+          this.stateButton = true;
+          this.contadorRodando = false;
+          this.contador = 0;
+          this.operationService.atualizarState(this.operation.name, 'verde');
+        } else {
+          this.onPausa = false;
+          clearInterval(this.intervalo)
+          this.intervaloCounter()
+        }
+      })
+    }, 5000)
+    setInterval(() => {
       this.operationService.getTCimposto().subscribe(
         (res: Main[]) => {
           res.forEach((res) => {
             this.lmitedTime = res.tcimposto;
+            this.ajustarTempoToroide()
           });
         },
         (error) => {
@@ -199,6 +227,7 @@ export class CounterComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.intervaloCounter();
     }, 1000);
+
     this.operationService.getTCimposto().subscribe((res: Main[]) => {
       this.imposto = res[0].imposto;
       this.shiftTime = res[0].shiftTime;
@@ -337,30 +366,21 @@ export class CounterComponent implements OnInit, OnDestroy {
     this.intervalo = setInterval(() => {
       if (!this.contadorRodando) {
         console.log("Tempo ocioso:", this.tempoOcioso);
-        
-        if (
-          this.tempoOcioso > this.lmitedTime / 2 &&
-          this.tempoOcioso < this.lmitedTime / 2 + 10
-        ) {
-          if (!this.azulStateCalled) {
-            console.log("Enviando azul");
-            this.operationService.atualizarState(this.operation.name, 'azul');
-            this.azulStateCalled = true;
-            this.vermelhoStateCalled = false;
-          }
-        } else if (this.tempoOcioso > this.lmitedTime) {
+
+        if (this.tempoOcioso > this.lmitedTime) {
           if (!this.vermelhoStateCalled) {
             console.log("Enviando vermelho");
             this.operationService.atualizarState(this.operation.name, 'vermelho');
             this.vermelhoStateCalled = true;
-            this.azulStateCalled = false;
           }
+        } else if(this.tempoOcioso == 3){
+          this.operationService.atualizarState(this.operation.name, 'verde');
         }
-        
+
         this.tempoOcioso++;
       }
     }, 1000);
-}
+  }
 
   ngOnDestroy() {
     this.stopTimer('');
@@ -373,7 +393,6 @@ export class CounterComponent implements OnInit, OnDestroy {
   }
   toggleContagem(state: string) {
     clearInterval(this.intervalo);
-    this.azulStateCalled = false;
     this.vermelhoStateCalled = false;
     this.tempoOcioso = 0;
     if (this.contadorRodando) {
@@ -412,9 +431,6 @@ export class CounterComponent implements OnInit, OnDestroy {
         } else if (this.contador > 240 && this.currentState == 'azul') {
           console.log(this.currentState);
           this.currentState = 'vermelho';
-          this.operationService.atualizarState(this.operation.name, 'azul');
-        } else if (this.contador > 240 * 2 && this.currentState == 'vermelho') {
-          this.currentState = 'verde';
           this.operationService.atualizarState(this.operation.name, 'vermelho');
         } else if (this.contador < 240 && this.currentState == 'verde') {
           this.currentState = 'azul';
@@ -428,9 +444,9 @@ export class CounterComponent implements OnInit, OnDestroy {
           this.currentState == 'azul'
         ) {
           this.currentState = 'vermelho';
-          this.operationService.atualizarState(this.operation.name, 'azul');
+          this.operationService.atualizarState(this.operation.name, 'vermelho');
         } else if (
-          this.contador > this.lmitedTime * 3 &&
+          this.contador > this.lmitedTime &&
           this.currentState == 'vermelho'
         ) {
           this.currentState = 'verde';
@@ -439,7 +455,7 @@ export class CounterComponent implements OnInit, OnDestroy {
           this.contador < this.lmitedTime &&
           this.currentState == 'verde'
         ) {
-          this.currentState = 'azul';
+          this.currentState = 'vermelho';
           this.operationService.atualizarState(this.operation.name, 'verde');
         }
       }
@@ -470,7 +486,7 @@ export class CounterComponent implements OnInit, OnDestroy {
       var body: Nodemcu = {
         count: this.count,
         time: 0,
-        state: 'azul',
+        state: 'vermelho',
         currentTC: this.contador,
         nameId: this.operation,
         maintenance: this.maintenance,
@@ -546,5 +562,33 @@ export class CounterComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(DialogHelpComponent, {
       data: this.operation.name,
     });
+  }
+
+  ajustarTempoToroide() {
+    if (this.operation.name == "170" || this.operation.name == "180" || this.operation.name == "160" || this.operation.name == "150") {
+      this.lmitedTime = 240
+    }
+  }
+
+  analise() {
+    this.operationService.changeAnalise(this.operation.name, !this.analiseButton)
+    this.analiseButton = !this.analiseButton
+    if (this.analiseButton) {
+      this.onAnalise = true;
+      clearInterval(this.intervalo);
+      this.tempoOcioso = 0;
+      this.intervaloCounter();
+      this.stateButton = true;
+      this.contador = 0;
+      this.contadorRodando = false;
+      clearInterval(this.intervalRef);
+      this.vermelhoStateCalled = false;
+      setTimeout(() => {
+        this.azulStateCalled = true;
+      }, 100)
+    } else {
+      this.azulStateCalled = false;
+      this.onAnalise = false;
+    }
   }
 }

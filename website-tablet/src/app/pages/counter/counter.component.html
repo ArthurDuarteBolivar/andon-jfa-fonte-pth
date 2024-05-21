@@ -1,6 +1,7 @@
+<button class="analiseButton" (click)="analise()">Analise</button>
 <section (click)="enterFullscreen()"
-      [ngClass]="{'animationBlue': azulStateCalled || contador > lmitedTime}"
-      [ngClass]="{'animationRed': vermelhoStateCalled || lmitedTime && contador > lmitedTime * 3}">
+      [ngClass]="{'animationBlue': azulStateCalled}"
+      [ngClass]="{'animationRed': vermelhoStateCalled || contador > lmitedTime }">
     <div class="info">      
         <div>
             <h1>REALIZADO: {{count}}</h1> 
@@ -8,10 +9,10 @@
             <h1>REALIZADO HR: {{realizadoHoraAtual}}</h1>
         </div>
         <div> <h1 *ngIf="operation.name != '170' && operation.name != '160'  && operation.name != '180'  && operation.name != '190'" [ngStyle]="{
-          'color': contador < lmitedTime ? '#00FF00':  (contador > lmitedTime && contador < lmitedTime * 3 ? '#5ac5e9' : 'red')
+          'color': contador < lmitedTime ? '#00FF00':  (contador > lmitedTime ? '#ff0000' : 'red')
         }">TEMPO: {{contador}}s</h1>
       <h1 *ngIf="operation.name == '160' || operation.name == '170' || operation.name == '180' || operation.name == '190'" [ngStyle]="{
-          'color': contador < 240 ? '#00FF00':  (contador > 240 && contador < 240 * 2 ? '#5ac5e9' : 'red')
+          'color': contador < 240 ? '#00FF00':  (contador > 240  ? '#ff0000' : 'red')
         }">TEMPO: {{contador}}s</h1>
         </div>
         
@@ -19,7 +20,7 @@
     <div class="actions">
         <button (click)="toggleContagem('count')" *ngIf="stateButton == false">TERMINAR</button>
         <!-- <button *ngIf="loadingButton && stateButton" disabled="true">AGUARDE</button> -->
-        <button (click)="toggleContagem('count')" *ngIf="stateButton">INICIAR</button>
+        <button (click)="toggleContagem('count')" *ngIf="stateButton"  [disabled]="onPausa || onAnalise">INICIAR</button>
         <button [disabled]="stateButton" (click)="toggleContagem('refuse')">REFUGO</button>
         <button (click)="openDialog()">TUTORIAL</button>
   </div>
